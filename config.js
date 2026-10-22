@@ -6,5 +6,5 @@ window.APP_CONFIG = {
   // Name shown at the top of the waiting-room screen.
   HOSPITAL_NAME: "Outpatient Queue Board",
   // Set to false to show only ticket numbers on the public screen (no names at all).
-  SHOW_NAMES_ON_SCREEN: true
+  SHOW_NAMES_ON_SCREEN: false,
 };
