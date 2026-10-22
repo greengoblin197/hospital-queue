@@ -320,10 +320,15 @@ input,select{font:400 15px var(--f-body);color:var(--ink);background:var(--bg);b
       wire("#callNext", function(){ act(sb.rpc("call_next").then(chk), load); });
       wire("#doneNext", function(){ act(sb.rpc("finish_current", {p_call_next:true}).then(chk), load); });
       wire("#done",     function(){ act(sb.rpc("finish_current", {p_call_next:false}).then(chk), load); });
+    }
     function chk(r){ if (r.error) throw r.error; return r; }
     async function load(){
       try { rows = await q(sb.from("staff_queue").select("*")); draw(); }
       catch (e) { alert_(pretty(e)); }
+    }
+    await load();
+    subscribeTickets(load);
+    every(load, 10000);
     }
     await load();
     subscribeTickets(load);
