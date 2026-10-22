@@ -1,7 +1,7 @@
 // Fill these in from Supabase: Project Settings > API.
 // The anon key is meant to be public. Your database rules (schema.sql) are what protect the data.
 window.APP_CONFIG = {
-  SUPABASE_URL: "https://wmlmrrtjwignglrjopag.supabase.co",
+  SUPABASE_URL: "https://hospital-queue-fj1u64mms-ibrahim-abdullahis-projects-310a6e3a.vercel.app",
   SUPABASE_ANON_KEY: "sb_publishable_wcLKh6U3ir9vbOakqyLMCg_X_Tg3XyB",
   // Name shown at the top of the waiting-room screen.
   HOSPITAL_NAME: "Outpatient Queue Board",
