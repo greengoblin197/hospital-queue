@@ -313,11 +313,13 @@ input,select{font:400 15px var(--f-body);color:var(--ink);background:var(--bg);b
       }).join("") : '<p class="hint">Nobody is waiting for you.</p>';
       $("#docbody").innerHTML = '<div class="docgrid">' + left + '<div class="panel"><div class="label">Waiting for you (' + q2.length + ')</div>' + nxt +
         '<div style="margin-top:12px">' + list + '</div><p class="hint" style="margin:10px 0 0">Seen today: ' + seen + '</p></div></div>';
-      var b;
-      if ((b = $("#callNext")))  b.onclick = function(){ b.disabled = true; act(sb.rpc("call_next").then(chk), load); };
-      if ((b = $("#doneNext")))  b.onclick = function(){ b.disabled = true; act(sb.rpc("finish_current", {p_call_next:true}).then(chk), load); };
-      if ((b = $("#done")))      b.onclick = function(){ b.disabled = true; act(sb.rpc("finish_current", {p_call_next:false}).then(chk), load); };
-    }
+      function wire(sel, fn){
+        var el = $(sel);
+        if (el) el.onclick = function(){ el.disabled = true; fn(); };
+      }
+      wire("#callNext", function(){ act(sb.rpc("call_next").then(chk), load); });
+      wire("#doneNext", function(){ act(sb.rpc("finish_current", {p_call_next:true}).then(chk), load); });
+      wire("#done",     function(){ act(sb.rpc("finish_current", {p_call_next:false}).then(chk), load); });
     function chk(r){ if (r.error) throw r.error; return r; }
     async function load(){
       try { rows = await q(sb.from("staff_queue").select("*")); draw(); }

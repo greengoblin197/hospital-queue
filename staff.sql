@@ -22,8 +22,8 @@ from auth.users u where u.email = 'ibrahimtgwarzo2@gmail.com';
 
 -- Front desk: no doctor_id.
 insert into profiles (id, full_name, role)
-select u.id, 'Nurse Amaka Obi', 'desk'
-from auth.users u where u.email = 'frontdesk@example.com';
+select u.id, 'Nurse Amaka Obi', 'frontdesk'
+from auth.users u where u.email = 'frontdesk@gmail.com';
 
 -- ---------------------------------------------------------------------------
 -- Useful later:
