@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Outpatient Queue Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@500;600&family=Schibsted+Grotesk:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F8FBFB; --surface:#FFFFFF; --ink:#0E2528; --muted:#566E72; --line:#DEE8E9;
+  --accent:#0B7A75; --accent-ink:#FFFFFF; --accent-soft:#E9F5F4;
+  --amber:#A24E06; --amber-bg:#FDF0DC; --ok:#17794F; --bad:#B42318;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0B1618; --surface:#122326; --ink:#E4EFEF; --muted:#8FA9AC; --line:#244043;
+    --accent:#3CC4BA; --accent-ink:#04302D; --accent-soft:#123A3C;
+    --amber:#F2A33A; --amber-bg:#3A2A10; --ok:#5FD39A; --bad:#FF8A7A;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-0.01em}
+.top{display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:space-between;margin-bottom:18px}
+.brand h1{font-size:28px;line-height:1.1}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.label{font:600 11px var(--f-body);text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.btn{font:600 14px var(--f-body);border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 14px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:6px 10px;font-size:13px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chip{display:inline-block;font:600 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase;border-radius:5px;padding:3px 7px;white-space:nowrap;background:var(--amber-bg);color:var(--amber)}
+.hint{color:var(--muted);font-size:13px}
+.banner{background:var(--amber-bg);color:var(--amber);border-radius:8px;padding:8px 12px;font-weight:600;font-size:14px;margin-bottom:12px}
+.msg{min-height:1.4em;font-size:14px;color:var(--ok);font-weight:500}
+.msg.err{color:var(--bad)}
+
+/* waiting-room screen */
+.board-head{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.board-head h2{font-size:24px}
+.clock{font:600 26px var(--f-mono);font-variant-numeric:tabular-nums}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px}
+.col h3{font-size:19px}
+.col .dept{color:var(--muted);font-size:13px}
+.serving{margin:14px 0 6px;background:var(--accent-soft);border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.serving .tk{font:600 40px/1 var(--f-mono);color:var(--accent)}
+.serving .nm{font-weight:600;text-align:right}
+.serving.idle .tk{color:var(--muted)}
+.qrow{display:grid;grid-template-columns:1.6rem 4.4rem minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.qrow .pos{font:600 14px var(--f-mono);color:var(--muted)}
+.qrow .tk{font:600 16px var(--f-mono)}
+.qrow .nm{min-width:0;overflow-wrap:anywhere}
+.qrow .meta{text-align:right;font-size:13px;color:var(--muted);white-space:nowrap}
+.qrow.first .pos{color:var(--accent)}
+.qrow.first .nm{font-weight:600}
+.rule{margin-top:14px;color:var(--muted);font-size:13px}
+.stafflink{margin-top:28px;font-size:12px;color:var(--muted)}
+.stafflink a{color:var(--muted)}
+/* large-screen scaling so a TV across the room can read it */
+@media (min-width:1500px){
+  body.tv{font-size:20px}
+  body.tv .brand h1{font-size:40px}
+  body.tv .board-head h2{font-size:32px}
+  body.tv .clock{font-size:40px}
+  body.tv .col h3{font-size:28px}
+  body.tv .serving .tk{font-size:64px}
+  body.tv .qrow .tk{font-size:26px}
+  body.tv .qrow{grid-template-columns:2.2rem 6rem minmax(0,1fr) auto}
+  body.tv .wrap{max-width:none}
+}
+
+/* staff views */
+.who{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.docgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px}
+.deskgrid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:14px}
+@media (max-width:760px){.docgrid,.deskgrid{grid-template-columns:minmax(0,1fr)}}
+.now .tk{font:600 44px/1 var(--f-mono);color:var(--accent);margin:8px 0 4px}
+.now .nm{font:700 22px var(--f-display)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.next{border:1px dashed var(--accent);border-radius:8px;padding:12px 14px;margin-top:14px}
+.next .nm{font-weight:600;font-size:17px}
+form{display:grid;gap:12px}
+label{display:grid;gap:5px;font-weight:600;font-size:13px}
+input,select{font:400 15px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+.dgroup{margin-top:14px}
+.dgroup:first-of-type{margin-top:6px}
+.dgroup h3{font-size:16px;margin-bottom:2px}
+.drow{display:grid;grid-template-columns:4.4rem minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.drow .tk{font:600 15px var(--f-mono)}
+.drow .nm{overflow-wrap:anywhere}
+.drow .btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.reasonform{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-bottom:4px}
+.reasonform input{flex:1 1 220px;width:auto}
+.log{margin:10px 0 0;padding:0;list-style:none}
+.log li{display:grid;grid-template-columns:3.2rem minmax(0,1fr);gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.log li:first-child{border-top:0}
+.log .t{font:500 13px var(--f-mono);color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.btn{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  var CFG = window.APP_CONFIG || {};
+  var app = document.getElementById("app");
+  function $(s){ return document.querySelector(s); }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function hm(iso){ return new Date(iso).toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit"}); }
+  function waited(iso){
+    var m = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+    return m < 60 ? m + " min" : Math.floor(m / 60) + "h " + String(m % 60).padStart(2, "0") + "m";
+  }
+  function startOfToday(){ var d = new Date(); d.setHours(0,0,0,0); return d.getTime(); }
+  function pretty(e){
+    var m = (e && e.message) || String(e || "Something went wrong");
+    if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return "Cannot reach the server. Check the internet connection and try again.";
+    return m;
+  }
+
+  if (!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY || !window.supabase) {
+    app.innerHTML = '<div class="panel" style="max-width:560px"><h2 style="font-size:22px;margin-bottom:8px">Setup needed</h2>' +
+      '<p class="hint" style="margin:0">Open <b>config.js</b> and add your Supabase project URL and anon key, then reload. ' +
+      'If both are filled in, check that the page can load the Supabase script.</p></div>';
+    return;
+  }
+  var sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+  async function q(p){ var r = await p; if (r.error) throw r.error; return r.data; }
+
+  var timers = [], channel = null, pendingRedraw = null;
+  function cleanup(){
+    timers.forEach(clearInterval); timers = [];
+    if (channel) { sb.removeChannel(channel); channel = null; }
+    pendingRedraw = null;
+  }
+  function every(fn, ms){ timers.push(setInterval(fn, ms)); }
+
+  /* ---------------------------------------------------------------- waiting-room screen */
+  function tvRoute(){
+    document.body.className = "tv";
+    document.title = CFG.HOSPITAL_NAME || "Outpatient Queue Board";
+    var showNames = CFG.SHOW_NAMES_ON_SCREEN !== false;
+    app.innerHTML = '<div class="top"><div class="brand"><h1>' + esc(CFG.HOSPITAL_NAME || "Outpatient Queue Board") + '</h1></div></div>' +
+      '<div id="board"></div><div class="stafflink"><a href="#/staff">Staff sign-in</a></div>';
+    var doctors = [], rows = [], failed = false, loaded = false;
+
+    function draw(){
+      var board = $("#board"); if (!board) return;
+      var banner = failed ? '<div class="banner" role="status">Reconnecting. The list below may be out of date.</div>' : "";
+      if (!loaded) { board.innerHTML = '<p class="hint">Loading the queue…</p>'; return; }
+      var cols = doctors.map(function(d){
+        var mine = rows.filter(function(r){ return r.doctor_id === d.id; });
+        var s = mine.filter(function(r){ return r.status === "serving"; })[0];
+        var w = mine.filter(function(r){ return r.status === "waiting"; }).sort(function(a,b){ return a.pos - b.pos; });
+        var now = s
+          ? '<div class="serving"><div><div class="label">Now with the doctor</div><div class="tk">' + esc(s.ticket_no) + '</div></div>' + (showNames ? '<div class="nm">' + esc(s.short_name) + '</div>' : '') + '</div>'
+          : '<div class="serving idle"><div><div class="label">Now with the doctor</div><div class="tk">&mdash;</div></div><div class="nm hint">Room free</div></div>';
+        var list = w.length ? w.map(function(p, i){
+          return '<div class="qrow' + (i === 0 ? " first" : "") + '"><span class="pos">' + (i + 1) + '</span><span class="tk">' + esc(p.ticket_no) + '</span>' +
+            '<span class="nm">' + (showNames ? esc(p.short_name) : "") + (p.is_priority ? ' <span class="chip">Priority</span>' : "") + '</span>' +
+            '<span class="meta">Reg. ' + hm(p.registered_at) + '<br>' + waited(p.registered_at) + '</span></div>';
+        }).join("") : '<p class="hint">No one is waiting.</p>';
+        return '<div class="panel col"><h3>' + esc(d.name) + '</h3><div class="dept">' + esc(d.dept) + '</div>' + now +
+          '<div class="label" style="margin-top:12px">Waiting, in order</div>' + list + '</div>';
+      }).join("");
+      board.innerHTML = banner +
+        '<div class="board-head"><h2>Please watch for your ticket number</h2><div class="clock" aria-label="Current time">' + hm(new Date().toISOString()) + '</div></div>' +
+        '<div class="cols">' + cols + '</div>' +
+        '<p class="rule">Patients are seen in the order they registered. A priority flag is recorded by the front desk with a written reason.</p>';
+    }
+    async function tick(){
+      try {
+        if (!doctors.length) doctors = await q(sb.from("doctors").select("*").order("id"));
+        rows = await q(sb.from("public_queue").select("*"));
+        failed = false; loaded = true;
+      } catch (e) { failed = true; }
+      draw();
+    }
+    tick();
+    every(tick, 4000);
+    every(draw, 20000);
+  }
+
+  /* ---------------------------------------------------------------- staff */
+  async function staffRoute(){
+    document.body.className = "";
+    document.title = "Staff sign-in";
+    var s = await sb.auth.getSession();
+    var session = s.data && s.data.session;
+    if (!session) return loginView();
+    var profile = null;
+    try { profile = await q(sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle()); }
+    catch (e) { return noRoleView(pretty(e)); }
+    if (!profile) return noRoleView("This account has no staff role yet. Ask the system administrator to assign one.");
+    if (profile.role === "doctor") return doctorView(profile);
+    if (profile.role === "desk") return deskView(profile);
+    noRoleView("This account has no staff role yet.");
+  }
+  async function signOut(){
+    await sb.auth.signOut(); cleanup(); location.hash = "#/";
+    route();
+  }
+  function header(profile, sub){
+    return '<div class="top"><div class="brand"><h1>' + esc(profile.full_name) + '</h1><p>' + esc(sub) + '</p></div>' +
+      '<div class="who"><a class="btn" href="#/" id="seeScreen">View waiting-room screen</a><button class="btn" id="signout">Sign out</button></div></div>';
+  }
+  function wireHeader(){
+    var b = $("#signout"); if (b) b.onclick = signOut;
+  }
+
+  function loginView(){
+    app.innerHTML = '<div class="top"><div class="brand"><h1>' + esc(CFG.HOSPITAL_NAME || "Outpatient Queue Board") + '</h1><p>Staff sign-in</p></div></div>' +
+      '<div class="panel" style="max-width:440px"><form id="loginForm">' +
+      '<label for="email">Email<input id="email" type="email" autocomplete="username" required></label>' +
+      '<label for="pw">Password<input id="pw" type="password" autocomplete="current-password" required></label>' +
+      '<button class="btn primary" type="submit" id="loginBtn">Sign in</button><div class="msg err" id="loginMsg" aria-live="polite"></div></form>' +
+      '<p class="hint" style="margin:6px 0 0">Staff accounts are created by the system administrator.</p></div>' +
+      '<div class="stafflink"><a href="#/">Back to the waiting-room screen</a></div>';
+    $("#loginForm").onsubmit = async function(e){
+      e.preventDefault();
+      var btn = $("#loginBtn"); btn.disabled = true;
+      var r = await sb.auth.signInWithPassword({ email: $("#email").value.trim(), password: $("#pw").value });
+      if (r.error) {
+        $("#loginMsg").textContent = /Invalid login/i.test(r.error.message) ? "Email or password is not correct." : pretty(r.error);
+        btn.disabled = false; return;
+      }
+      route();
+    };
+  }
+  function noRoleView(text){
+    app.innerHTML = '<div class="panel" style="max-width:520px"><h2 style="font-size:22px;margin-bottom:8px">Signed in, no role</h2>' +
+      '<p class="hint" style="margin:0 0 14px">' + esc(text) + '</p><button class="btn" id="signout">Sign out</button></div>';
+    wireHeader();
+  }
+
+  /* redraw helper: skip while the person is typing in a field inside the container */
+  function safeRedraw(container, fn){
+    var a = document.activeElement;
+    if (a && a.tagName === "INPUT" && container.contains(a)) { pendingRedraw = fn; return; }
+    fn();
+  }
+  document.addEventListener("focusout", function(){
+    setTimeout(function(){
+      var a = document.activeElement;
+      if (pendingRedraw && !(a && a.tagName === "INPUT")) { var f = pendingRedraw; pendingRedraw = null; f(); }
+    }, 50);
+  });
+  function subscribeTickets(onChange){
+    channel = sb.channel("tickets-live").on("postgres_changes", {event:"*", schema:"public", table:"tickets"}, onChange).subscribe();
+  }
+  async function act(promise, after){
+    try { await promise; } catch (e) { alert_(pretty(e)); }
+    if (after) after();
+  }
+  function alert_(text){
+    var el = $("#note"); if (!el) return;
+    el.className = "msg err"; el.textContent = text;
+  }
+  function ok_(text){
+    var el = $("#note"); if (!el) return;
+    el.className = "msg"; el.textContent = text;
+  }
+
+  /* ---- doctor ---- */
+  async function doctorView(profile){
+    var doctor = null, rows = [];
+    try { doctor = (await q(sb.from("doctors").select("*").eq("id", profile.doctor_id)))[0]; } catch (e) {}
+    document.title = profile.full_name;
+    app.innerHTML = header(profile, doctor ? doctor.dept : "") +
+      '<div id="note" class="msg" aria-live="polite"></div><div id="docbody"></div>';
+    wireHeader();
+
+    function draw(){
+      var mine = rows.filter(function(r){ return r.doctor_id === profile.doctor_id; });
+      var s = mine.filter(function(r){ return r.status === "serving"; })[0];
+      var q2 = mine.filter(function(r){ return r.status === "waiting"; }).sort(function(a,b){ return a.pos - b.pos; });
+      var seen = mine.filter(function(r){ return r.status === "done" && new Date(r.ended_at).getTime() >= startOfToday(); }).length;
+      var left;
+      if (s) {
+        left = '<div class="panel now"><div class="label">In consultation</div><div class="tk">' + esc(s.ticket_no) + '</div><div class="nm">' + esc(s.patient_name) + '</div>' +
+          '<div class="hint">Registered ' + hm(s.registered_at) + '. In the room since ' + hm(s.started_at) + '.</div>' +
+          '<div class="actions"><button class="btn primary" id="doneNext"' + (q2.length ? "" : " disabled") + '>Done, call next patient</button><button class="btn" id="done">Mark done</button></div></div>';
+      } else {
+        left = '<div class="panel now"><div class="label">In consultation</div><div class="tk" style="color:var(--muted)">&mdash;</div><div class="nm">Room is free</div>' +
+          '<div class="hint">Call the next patient when you are ready.</div>' +
+          '<div class="actions"><button class="btn primary" id="callNext"' + (q2.length ? "" : " disabled") + '>Call next patient</button></div></div>';
+      }
+      var nxt = q2[0] ? '<div class="next"><div class="label">Next in line</div><div class="nm">' + esc(q2[0].ticket_no) + ' &middot; ' + esc(q2[0].patient_name) +
+        (q2[0].priority_at ? ' <span class="chip">Priority</span>' : "") + '</div><div class="hint">Registered ' + hm(q2[0].registered_at) + ', waiting ' + waited(q2[0].registered_at) + '</div>' +
+        (q2[0].priority_at ? '<div class="hint">Reason: ' + esc(q2[0].priority_reason) + '</div>' : "") + '</div>' : "";
+      var list = q2.length ? q2.map(function(p, i){
+        return '<div class="qrow"><span class="pos">' + (i + 1) + '</span><span class="tk">' + esc(p.ticket_no) + '</span><span class="nm">' + esc(p.patient_name) +
+          (p.priority_at ? ' <span class="chip">Priority</span>' : "") + '</span><span class="meta">' + hm(p.registered_at) + '<br>' + waited(p.registered_at) + '</span></div>';
+      }).join("") : '<p class="hint">Nobody is waiting for you.</p>';
+      $("#docbody").innerHTML = '<div class="docgrid">' + left + '<div class="panel"><div class="label">Waiting for you (' + q2.length + ')</div>' + nxt +
+        '<div style="margin-top:12px">' + list + '</div><p class="hint" style="margin:10px 0 0">Seen today: ' + seen + '</p></div></div>';
+      var b;
+      if ((b = $("#callNext")))  b.onclick = function(){ b.disabled = true; act(sb.rpc("call_next").then(chk), load); };
+      if ((b = $("#doneNext")))  b.onclick = function(){ b.disabled = true; act(sb.rpc("finish_current", {p_call_next:true}).then(chk), load); };
+      if ((b = $("#done")))      b.onclick = function(){ b.disabled = true; act(sb.rpc("finish_current", {p_call_next:false}).then(chk), load); };
+    }
+    function chk(r){ if (r.error) throw r.error; return r; }
+    async function load(){
+      try { rows = await q(sb.from("staff_queue").select("*")); draw(); }
+      catch (e) { alert_(pretty(e)); }
+    }
+    await load();
+    subscribeTickets(load);
+    every(load, 10000);
+  }
+
+  /* ---- front desk ---- */
+  async function deskView(profile){
+    var doctors = [], rows = [], events = [], openFlag = null;
+    try { doctors = await q(sb.from("doctors").select("*").order("id")); } catch (e) {}
+    document.title = "Front desk";
+    var opts = doctors.map(function(d){ return '<option value="' + d.id + '">' + esc(d.name) + ' &middot; ' + esc(d.dept) + '</option>'; }).join("");
+    app.innerHTML = header(profile, "Front desk") +
+      '<div class="deskgrid"><div><div class="panel"><h3 style="margin-bottom:12px">Register a patient</h3>' +
+      '<form id="regForm" autocomplete="off"><label for="pname">Patient name<input id="pname" required maxlength="80" placeholder="e.g. Amina Danjuma"></label>' +
+      '<label for="pdoc">Doctor<select id="pdoc">' + opts + '</select></label>' +
+      '<button class="btn primary" type="submit" id="regBtn">Register and issue ticket</button><div id="note" class="msg" aria-live="polite"></div></form>' +
+      '<p class="hint" style="margin:0">The ticket time is set by the server and cannot be edited.</p></div></div>' +
+      '<div><div class="panel"><div class="label">Waiting list, in queue order</div><div id="lists"></div></div>' +
+      '<div class="panel" style="margin-top:14px"><div class="label">Activity log</div><ul class="log" id="log"></ul></div></div></div>';
+    wireHeader();
+
+    function drawLists(){
+      var html = doctors.map(function(d){
+        var w = rows.filter(function(r){ return r.doctor_id === d.id && r.status === "waiting"; }).sort(function(a,b){ return a.pos - b.pos; });
+        var s = rows.filter(function(r){ return r.doctor_id === d.id && r.status === "serving"; })[0];
+        var body = w.length ? w.map(function(p){
+          var open = openFlag && openFlag.id === p.id;
+          return '<div class="drow"><span class="tk">' + esc(p.ticket_no) + '</span><span class="nm">' + esc(p.patient_name) + ' <span class="hint">' + hm(p.registered_at) + '</span>' +
+            (p.priority_at ? ' <span class="chip">Priority</span>' : "") + '</span><span class="btns">' +
+            (p.priority_at ? "" : '<button class="btn sm" data-a="flag" data-id="' + p.id + '">Flag priority</button>') +
+            '<button class="btn sm" data-a="remove" data-id="' + p.id + '">Remove</button></span>' +
+            (open ? '<div class="reasonform"><input id="reason" maxlength="120" aria-label="Reason" placeholder="' +
+              (openFlag.kind === "flag" ? "Reason for priority, e.g. chest pain, seen by triage nurse" : "Reason, e.g. left without being seen") + '">' +
+              '<button class="btn sm primary" data-a="save" data-id="' + p.id + '">' + (openFlag.kind === "flag" ? "Save flag" : "Remove from queue") + '</button>' +
+              '<button class="btn sm" data-a="cancel">Cancel</button></div>' : "") + '</div>';
+        }).join("") : '<p class="hint" style="margin:6px 0 0">No one waiting.</p>';
+        return '<div class="dgroup"><h3>' + esc(d.name) + '</h3>' + (s ? '<div class="hint">In consultation: ' + esc(s.ticket_no) + ' ' + esc(s.patient_name) + '</div>' : "") + body + '</div>';
+      }).join("");
+      $("#lists").innerHTML = html;
+      if (openFlag) { var r = $("#reason"); if (r) r.focus(); }
+    }
+    function drawLog(){
+      $("#log").innerHTML = events.map(function(l){ return '<li><span class="t">' + hm(l.at) + '</span><span>' + esc(l.message) + (l.actor_name ? ' <span class="hint">[' + esc(l.actor_name) + ']</span>' : "") + '</span></li>'; }).join("");
+    }
+    async function load(){
+      try {
+        rows = await q(sb.from("staff_queue").select("*"));
+        events = await q(sb.from("events").select("*").order("at", {ascending:false}).limit(15));
+        safeRedraw($("#lists"), drawLists); drawLog();
+      } catch (e) { alert_(pretty(e)); }
+    }
+    function chk(r){ if (r.error) throw r.error; return r; }
+
+    $("#lists").onclick = function(e){
+      var b = e.target.closest("[data-a]"); if (!b) return;
+      var a = b.getAttribute("data-a"), id = Number(b.getAttribute("data-id"));
+      if (a === "flag" || a === "remove") { openFlag = { id: id, kind: a === "flag" ? "flag" : "remove" }; drawLists(); return; }
+      if (a === "cancel") { openFlag = null; drawLists(); return; }
+      if (a === "save") {
+        var reason = ($("#reason").value || "").trim();
+        var call = openFlag.kind === "flag" ? sb.rpc("flag_priority", {p_ticket:id, p_reason:reason}) : sb.rpc("cancel_ticket", {p_ticket:id, p_reason:reason});
+        var done = openFlag.kind === "flag" ? "Priority recorded and shown on the waiting-room screen." : "Patient removed from the queue.";
+        b.disabled = true;
+        call.then(chk).then(function(){
+          openFlag = null; pendingRedraw = null; drawLists(); ok_(done); load();
+        }, function(err){ alert_(pretty(err)); b.disabled = false; });
+      }
+    };
+    $("#regForm").onsubmit = function(e){
+      e.preventDefault();
+      var name = $("#pname").value.trim(); if (!name) return;
+      var btn = $("#regBtn"); btn.disabled = true;
+      sb.rpc("register_patient", { p_name: name, p_doctor: Number($("#pdoc").value) }).then(chk).then(function(r){
+        var t = r.data;
+        ok_("Ticket " + t.ticket_no + " issued. Tell the patient to watch for " + t.ticket_no + ".");
+        $("#pname").value = ""; $("#pname").focus();
+      }, function(err){ alert_(pretty(err)); }).then(function(){ btn.disabled = false; load(); });
+    };
+    await load();
+    subscribeTickets(load);
+    every(load, 10000);
+  }
+
+  /* ---------------------------------------------------------------- router */
+  async function route(){
+    cleanup();
+    if (location.hash === "#/staff") await staffRoute(); else tvRoute();
+  }
+  window.addEventListener("hashchange", route);
+  route();
+})();
+</script>
+</body>
+</html>
